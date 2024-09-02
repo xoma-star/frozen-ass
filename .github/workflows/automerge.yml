@@ -10,8 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Получение веток
-      - uses: actions/github-script@v6
-      - with:
+        uses: actions/github-script@v6
+        with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             console.log(github)
