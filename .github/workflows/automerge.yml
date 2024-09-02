@@ -1,9 +1,7 @@
 name: Автомерж для релизных веток 1
 
 on:
-  pull_request:
-    branches:
-      - rc-*
+  pull_request
 
 jobs:
   merge-rc-branches:
