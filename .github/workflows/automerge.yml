@@ -1,15 +1,58 @@
-name: Автомерж для релизных веток 1
+name: Merge RC branches
 
 on:
-  pull_request
+  pull_request:
+    types: [opened, synchronize]
 
 jobs:
   merge-rc-branches:
     runs-on: ubuntu-latest
     steps:
-      - name: Получение веток
+      - name: Get merged pull request
+        id: merged-pr
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            console.log(github)
+            const pullRequest = github.context.pullRequest;
+            const mergedPullRequest = github.context.pullRequest;
+            console.log(`Merged pull request: ${mergedPullRequest.number}`);
+
+      - name: Get RC branches
+        id: rc-branches
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const branches = github.context.repo.branches;
+            const rcBranches = branches.filter(branch => branch.name.startsWith('rc-'));
+            console.log(`RC branches: ${rcBranches.map(branch => branch.name)}`);
+
+      - name: Create merge requests for RC branches
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const rcBranches = rc-branches.outputs.rc-branches;
+            const mergedPullRequest = merged-pr.outputs.merged-pr;
+            const issueNumber = mergedPullRequest.issue.number;
+            rcBranches.forEach(branch => {
+              if (branch.name > mergedPullRequest.base.ref) {
+                const title = `Merge ${mergedPullRequest.title} into ${branch.name}`;
+                const body = `This merge request is related to issue #${issueNumber}`;
+                const pullRequest = {
+                  title,
+                  body,
+                  head: `${mergedPullRequest.head}`,
+                  base: branch.name,
+                  labels: ['merge-request']
+                };
+                console.log(`Creating merge request for ${branch.name}`);
+                github.pulls.create({
+                  owner: github.context.repo.owner,
+                  repo: github.context.repo.repo,
+                  pull_request: pullRequest
+                });
+              }
+            });
+
