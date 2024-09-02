@@ -2,9 +2,9 @@ name: Автомерж для релизных веток 1
 
 on:
   pull_request:
-    types: [opened]
+    types: [opened, reopened]
     branches:
-      - 'rc-*'
+      - 'rc-**'
 
 jobs:
   merge-rc-branches:
